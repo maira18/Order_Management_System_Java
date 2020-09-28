@@ -1,0 +1,61 @@
+//this function opens the image selection dialogue box
+public void actionPerformed(ActionEvent ae)
+    {
+        if(ae.getActionCommand()=="jButton1")
+        {
+            JFileChooser filechooser = new JFileChooser();
+    filechooser.setDialogTitle("Choose Your File");
+    filechooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    int returnval = filechooser.showOpenDialog(this);
+    if (returnval == JFileChooser.APPROVE_OPTION)
+    {
+        File file = filechooser.getSelectedFile();
+        BufferedImage bi;
+        try {
+            insertImage(file);
+        } catch(IOException e) {
+           e.printStackTrace();
+        }       catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Dbprac.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(Dbprac.class.getName()).log(Level.SEVERE, null, ex);
+                } 
+    }
+        }
+    }
+
+//this function converts a blob from database to imageIcon
+ private ImageIcon convertBlobToImage(Blob blob) throws IOException, SQLException
+    {
+        ImageIcon ii=new ImageIcon(blob.getBytes(1, (int) blob.length()),"jpg");
+        return ii;
+    }
+//this function inserts an image to database
+    private void insertImage(File file) throws ClassNotFoundException, SQLException, FileNotFoundException
+    {
+             Class.forName("com.mysql.jdbc.Driver");
+             Connection con = DriverManager.getConnection("jdbc:mysql://localhost/cms","root","");
+             PreparedStatement ps = con.prepareStatement("insert into images (img, description) values(?, ?)");
+             FileInputStream fis = new FileInputStream(file);
+            if(file.length()>1048576)
+            {
+               System.out.println("file size too long");
+               return;   
+            }
+             ps.setBinaryStream(1, fis, (int)file.length());
+             ps.setString(2, "hello1");
+             ps.executeUpdate();
+    }
+//this function reads blob from database
+    private ImageIcon readImage() throws ClassNotFoundException, SQLException, IOException
+    {
+             Class.forName("com.mysql.jdbc.Driver");
+             Connection con = DriverManager.getConnection("jdbc:mysql://localhost/cms","root","");   
+             ResultSet rs = con.createStatement().executeQuery("select img from images where id = 2");
+             Blob blob = null;
+             while(rs.next())
+             {
+                 blob = rs.getBlob("img");
+             }
+             return convertBlobToImage(blob);
+    }
